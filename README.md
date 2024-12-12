@@ -85,7 +85,7 @@ This project was developed by a research team at National Cheng Kung University 
 
 ## References
 
-For detailed references, please refer to the published paper: *Dengue Risk Detection and Observation System* presented at CIKII 2024.
+For detailed references, please refer to the published paper: *Dengue Risk Detection and Observation System* presented at ICKII 2024.
 
 
 
