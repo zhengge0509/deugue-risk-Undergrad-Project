@@ -3,7 +3,8 @@ This project was part of my undergraduate research in the UCLab at National Chen
 
 # Web Demo Video
 <!-- <video src="video/demo.mp4" width="600" height="240" controls></video> -->
-[![Watch the video](https://www.youtube.com/watch?v=VzJXCywGHZw)]
+[![Watch the video](https://img.youtube.com/vi/VzJXCywGHZw/0.jpg))](https://www.youtube.com/watch?v=VzJXCywGHZw)
+
 | 名稱  | 數量 |
 | ----- | -------- |
 | 蘋果 | 3        |
