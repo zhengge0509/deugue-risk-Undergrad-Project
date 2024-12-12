@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="../css/style.css">
+    <link rel="shortcut icon" href="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+    
+    <title id="title">登革熱風險預測系統</title>
+    
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>    
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-providers@1.13.0/dist/leaflet-providers.css" />
+    <script src="https://unpkg.com/leaflet-providers@1.13.0/dist/leaflet-providers.js"></script>
+
+    <!-- Leaflet 地圖庫的 CSS 和 JavaScript 文件 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!--  Leaflet Fullscreen  -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-fullscreen/dist/leaflet.fullscreen.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet Fullscreen  JavaScript  -->
+    <script src="https://unpkg.com/leaflet-fullscreen/dist/Leaflet.fullscreen.min.js"></script>
+    <!--proj4 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+
+    <!-- Leaflet Grayscale Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-providers/leaflet-providers.css" />
+    <script src="https://unpkg.com/leaflet-providers/leaflet-providers.js"></script>
+
+    <!-- Leaflet Satellite Map -->
+    <!-- Replace YOUR_GOOGLE_MAPS_API_KEY with your actual Google Maps API key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD83fm-yYEo-vNL6T-21QBQ5LD8ozW46sU&callback=initMap"></script>
+
+    <script src="https://unpkg.com/leaflet.gridlayer.googlemutant"></script>
+    <!-- 為了要拿到 json 檔
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+
+    <style>
+        #map {
+            height: 100vh; /* 100% 螢幕高度 */
+            width: 100%;
+            margin-top: 10vh; /* 10% 螢幕高度 */
+            position: fixed;
+            top: 0vh;
+            left: 35vw;
+        }
+
+        #buttonContainer {
+            position: fixed;
+            top: 16vh;
+            left: 1vw;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        
+        /* 定義黑色桶子圖示的 CSS 樣式 */
+        .bucket-icon {
+            color: black;
+            font-size: 15px;
+        }
+
+        #risk_map_button {
+            position: fixed;
+            /* top: 12vh; 距離頂部 1% 螢幕高度 */
+            left: 12vw; /* 距離左側 1% 螢幕寬度 */
+            padding: 10px;
+            background-color: #4CAF50; /* 綠色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            border-radius: 5px; /* 圓角 */
+            cursor: pointer;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            transition: background-color 0.3s ease; /* 平滑過渡效果 */
+        }
+
+        #val_map_button {
+            position: fixed;
+            /* top: 12vh; 距離頂部 1% 螢幕高度 */
+            left: 18vw; /* 距離左側 10% 螢幕寬度，這裡設置不同的 left 屬性 */
+            padding: 10px;
+            background-color: #4CAF50; /* 綠色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            border-radius: 5px; /* 圓角 */
+            cursor: pointer;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            transition: background-color 0.3s ease; /* 平滑過渡效果 */
+        }
+
+        /* 滑鼠懸停時改變按鈕背景色 */
+        #risk_map_button:hover {
+            background-color: #45a049; /* 深綠色背景 */
+        }
+
+        #val_map_button:hover {
+            background-color: #45a049; /* 深綠色背景 */
+        }
+
+        #datePicker {
+            position: fixed;
+            /* top: 12vh; 距離頂部 1% 螢幕高度 */
+            left: 13vw;
+            padding: 10px;
+            background-color: #4CAF50; /* 綠色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            border-radius: 5px; /* 圓角 */
+            cursor: pointer;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            transition: background-color 0.3s ease; /* 平滑過渡效果 */ 
+        }
+
+    
+
+        #env  {
+            position: fixed;
+            top: 1vh;
+            right: 1vw; /* 距離日期按鈕的寬度 + 一些額外間距 */
+            padding: 7px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        #rightColumn {
+            position: fixed;
+            top: 12vh; /* 距離頂部 1% 螢幕高度 */
+            right: 1vw; /* 距離右側 1% 螢幕寬度 */
+            padding: 5px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        html, body{
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+}
+#egg{
+    display: inline-block;
+    width: 100%;
+    height: 100%;    
+}
+
+
+#titlebar{
+    position: absolute;
+    width: 100%;
+    height: 10vh;    
+    background-color: rgba(45, 69, 42, 0.795);
+   
+}
+
+#b3{
+    padding: 0px;
+    margin: 0px;
+    margin-left: 6vw;
+    color: ghostwhite;
+    line-height: 10vh;
+}
+
+
+#nav-tab{
+    position: fixed;
+    top: 30vh; /* 距離頂部 1% 螢幕高度 */
+    
+    height: 10%;
+    line-height: 100%;
+}
+#high-tab{
+    position: fixed;
+    top: 23vh;
+    left: 1vw;
+    background-color: crimson;
+    border-radius: 0.25rem;
+}
+#high-tab a, #middle-tab a,#low-tab a{
+    color: rgb(59, 59, 59);
+}
+#middle-tab{
+    position: fixed;
+    top: 23vh;
+    left: 10vw;
+    background-color: orange;
+    border-radius: 0.25rem;
+}
+#low-tab{
+    position: fixed;
+    top: 23vh;
+    left: 19vw;
+    background-color: rgb(107, 160, 28);
+    border-radius: 0.25rem;
+}
+
+
+#work-list{
+    float: left;
+    width: 50%;
+    padding: 0%;
+    margin: 0%;
+    height: 100%; 
+    line-height: 0;
+    background-color: #32383e;
+    overflow: scroll;
+    overflow-x: hidden;
+}
+#work-list th:nth-of-type(1){
+    width: 6%;
+}
+#work-list th:nth-of-type(2){
+    width: 50%;
+}
+#work-list th:nth-of-type(3){
+    width: 10%;
+}
+#work-list th:nth-of-type(4){
+    width: 60%;
+}
+
+.table{
+    position: fixed;
+    left: 2.5vw;
+    border-collapse: collapse;
+    line-height: 1.5;
+    width: 30%;
+}
+
+#nav-tabContent{
+    position: fixed;
+    width: 50%;
+    top: 50vh;
+    left: 0vw;
+    
+}
+#title_2 {
+    position: fixed;
+    top: 12vh;
+    left: 1vw;
+    color: white;
+    width: 32%;
+}
+#title_3 {
+    position: fixed;
+    top: 23vh;
+    left: 1vw;
+    color: white;
+    width: 32%;
+}
+#title_4 {
+    position: fixed;
+    top: 34vh;
+    left: 1vw;
+    color: white;
+    width: 32%;
+}
+#title_5 {
+    position: fixed;
+    top: 45vh;
+    left: 1vw;
+    color: white;
+    width: 32%;
+}
+#ht_2 {
+    left: 7vw;
+}
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- add the title --------------------------->
+    <div id="titlebar">
+      <h1 id="b3">登革熱風險預測系統</h1>
+  </div>
+  <div id="egg">
+    <div id="map"></div>
+     <!-- add the list ----------------------------->
+      <div id="work-list">
+        <div id="title_2">
+            <h3 align="center">地圖種類</h3>
+            <h6>
+                <button id="risk_map_button" onclick="risk_map()">風險地圖</button>
+                <button id="val_map_button" onclick="val_map()">準確度評測</button>
+            </h6>
+        </div>
+        <div id="title_3">
+            <h3 align="center">週數選擇</h3>
+            <h6><input type ="week" id="datePicker" min="2023-W36" max="2023-W39", value="2023-W36"></h6>
+        </div>
+        <div id="title_4">
+            <h3 align="center">區域選擇</h3>
+            <div align="center"><select align="center" id="region">
+                <option>全區</option>
+                <option>東區</option>
+                <option>北區</option>
+                <option>南區</option>
+                <option>永康區</option>
+                <option>中西區</option>
+                <option>安平區</option>
+                <option>仁德區</option>
+                <option>安南區</option>
+            </select></div>
+        </div>
+        <div id="title_5">
+            <h3 align="center">色塊說明</h3>
+            <div align="center">
+                <table id="ht_1" border="1" class="table table-dark table-striped table-hover js-sort-table">
+                    <tbody>
+                      <tr>
+                          <th colspan="2" rowspan="2" style="width:30%">☑</th>
+                          <th colspan="3" style="width:70%">預測病例數</th>
+                      </tr>
+                      <tr>
+                          <th style="width:20%">0 </th>
+                          <th style="width:20%">1~3</th>
+                          <th style="width:20%">4以上</th>
+                      </tr>
+                      <tr>
+                          <th rowspan="0">預測卵粒數</th>
+                          <th style="width:15%">1~10</th>
+                          <td style="background-color: #6ba01c">低風險 </td>
+                          <td style="background-color: #ffa500">中風險</td>
+                          <td style="background-color: #dc143c">高風險</td>
+                      </tr>
+                      <tr>
+                          <th>11~100</th>
+                          <td style="background-color: #ffa500">中風險 </td>
+                          <td style="background-color: #dc143c">高風險</td>
+                          <td style="background-color: #dc143c">高風險</td>
+                      </tr>
+                      <tr>
+                          <th>101以上</th>
+                          <td style="background-color: #dc143c">高風險 </td>
+                          <td style="background-color: #dc143c">高風險</td>
+                          <td style="background-color: #dc143c">高風險</td>
+                      </tr>
+                  </tbody>
+                </table>
+                <table id="ht_2" border="1" class="table table-dark table-striped table-hover js-sort-table" style="width:20%">
+                    <tbody>
+                      <tr>
+                          <th style="width:50%">預測正確 </th>
+                          <td style="background-color: #6ba01c"> </td>
+                      </tr>
+                      <tr>
+                            <th style="width:50%">預測錯誤</th>
+                          <td style="background-color: #dc143c"></td>
+                      </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+          </div>
+
+      </div>
+  </div>
+</div>
+
+  
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    var titleElement = document.getElementById('b3');
+
+    
+});
+$(document).ready(function(){
+        $(document).ready(function(){
+        // 預設顯示第一個選項卡的內容
+        $("#ht_1").show();
+        $("#ht_2").hide();
+        $("#middle").hide();
+        $("#low").hide();
+        
+        $("#risk_map_button").click(function () {
+            $("#ht_1").show();
+            $("#ht_2").hide();
+        });
+
+        $("#val_map_button").click(function(){
+            $("#ht_1").hide();
+            $("#ht_2").show();
+        });
+    });
+    
+    // 其他代碼...
+});
+        // 初始化 Leaflet 地圖
+        var map = L.map('map', {zoomSnap: 0.25}).setView([23.341580733691956, 120.11966875345786], 12);
+
+        //OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 設定台灣範圍的邊界
+        var taiwanBounds = L.latLngBounds(
+            L.latLng(22.8, 121), // 往(下, 右) 最多能拉多遠
+            L.latLng(23.4, 120)  // 台灣右下角座標
+        );
+
+        // 設定最大視窗範圍
+        map.setMaxBounds(taiwanBounds);
+        
+
+        // 當用戶嘗試超出範圍時，自動調整地圖位置
+        map.on('drag', function () {
+            map.panInsideBounds(taiwanBounds, { animate: false });
+        });
+
+        map.setMinZoom(11); // 設定最小縮放級別
+        map.setMaxZoom(18); // 設定最大縮放級別
+
+        fetch('./data.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            });
+
+
+        // 獲取用戶的當前位置
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var userLocation = [position.coords.latitude, position.coords.longitude];
+
+                // 將地圖中心設置為用戶的當前位置
+                map.setView(userLocation, 16, {
+                    "animate": true,
+                    "pan": {
+                        "duration": 2
+                    }
+                });
+
+                // 在地圖上標記用戶的當前位置
+                // L.marker(userLocation).addTo(map);
+            }, function () {
+                // 若無法取得用戶位置，可以在這裡處理錯誤
+                alert("無法獲取您的位置資訊。");
+            });
+        } else {
+            alert("您的瀏覽器不支援地理位置服務。");
+        }
+
+        // 定義 TWD97 轉 WGS84 的轉換函式
+        function convertTWD97toWGS84(x, y) {
+            // 定義 TWD97 和 WGS84 的座標系統
+            const twd97 = '+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+            const wgs84 = '+proj=longlat +datum=WGS84 +no_defs';
+
+            // 執行座標轉換
+            const coordinates = proj4(twd97, wgs84, [x, y]);
+
+            // 返回轉換後的座標
+            return { lat: coordinates[1], lng: coordinates[0] };
+        }
+
+
+        var baselayers = {
+            "Satellite": L.gridLayer.googleMutant({ type: 'satellite' }),
+            'OpenStreetMap.Mapnik': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+            'OpenStreetMap.HOT': L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'),
+            'OpenTopoMap': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png')
+        };
+
+        
+        L.control.layers(baselayers).addTo(map);
+        baselayers['OpenStreetMap.Mapnik'].addTo(map);
+        map.addControl(new L.Control.Fullscreen());
+        var selectedWeek = 36;
+        var map_now = 0;
+        // 0: all
+        // 1: '東區'
+        // 2: '北區'
+        // 3: '南區'
+        // 4: '永康區'
+        // 5: '中西區'
+        // 6: '安平區'
+        // 7: '仁德區'
+        // 8: '安南區'
+        var selected_region = '全區';
+
+        change_layer();
+
+        function risk_map() {
+            map_now = 0;
+            change_layer();
+        }
+        function val_map() {
+            map_now = 1;
+            change_layer();
+        }
+
+        document.getElementById('region').addEventListener('change', function () {
+            selected_region = this.value;
+            change_layer();
+            var x = 0, y = 0, scale = 0;
+            switch(selected_region) {
+                case '全區': x = 22.983742, y = 120.282952; scale = 12.5; break;
+                case '東區': x = 22.977552; y = 120.248321; scale = 14.5; break;
+                case '北區': x = 23.009227; y = 120.219003; scale = 14.7; break;
+                case '南區': x = 22.948879; y = 120.222228; scale = 13.8; break;
+                case '永康區': x = 23.0233; y = 120.294086; scale = 13.85; break;
+                case '中西區': x = 22.991845; y = 120.204866; scale = 14.7; break;
+                case '安平區': x = 22.988369; y = 120.181186; scale = 14.7; break;
+                case '仁德區': x = 22.939645; y = 120.275294; scale = 13.3; break;
+                case '安南區': x = 23.04688; y = 120.203408; scale = 13.1; break;
+            }
+            map.setView([x, y], scale, {
+                "animate": true,
+                "pan": {
+                    "duration": 1
+                }
+            });
+            // L.marker([x, y]).addTo(map);
+        });
+        var popup = L.popup();
+        function onMapClick(e) {
+        popup
+            .setLatLng(e.latlng)
+            .setContent("You clicked the map at " + e.latlng.toString())
+            .openOn(map);
+        }
+        map.on("click", onMapClick);
+        document.getElementById('datePicker').addEventListener('change', function () {
+            // ...更改時的操作
+            selectedWeek = Number(this.value.slice(-2)); // 獲取選中的日期
+            console.log("Selected Week:", selectedWeek);
+            change_layer();
+        });
+
+        function change_layer() {
+            function change_color_by_risk(feature) {
+                var pred_d = feature.properties.predicted_dengue[selectedWeek-36];
+                var pred_o = feature.properties.predicted_ovum[selectedWeek-36];
+                if (pred_d < 1 && pred_o <= 10) {
+                    return { color: "#6ba01c" };
+                }
+                else if(((pred_d >= 1 && pred_d <= 3) && (pred_o <= 10)) || ((pred_d < 1) && (pred_o > 10 && pred_o <= 100))) {
+                    return { color: "#ffa500" };
+                }
+                else {
+                    return { color: "#dc143c" };
+                }
+            };
+
+            function change_color_by_val(feature) {
+                var pred_d = feature.properties.predicted_dengue[selectedWeek-36];
+                var pred_o = feature.properties.predicted_ovum[selectedWeek-36];
+                var gt_d = feature.properties.gt_dengue[selectedWeek-36];
+                var gt_o = feature.properties.gt_ovum[selectedWeek-36];
+                var predicted_risk = 0;
+                var gt_risk = 0;
+                if (pred_d < 1 && pred_o <= 10) {
+                    predicted_risk = 1;
+                }
+                else if(((pred_d >= 1 && pred_d <= 3) && (pred_o <= 10)) || ((pred_d < 1) && (pred_o > 10 && pred_o <= 100))) {
+                    predicted_risk = 2;
+                }
+                else {
+                    predicted_risk = 3;
+                }
+
+                if (gt_d < 1 && gt_o <= 10) {
+                    gt_risk = 1;
+                }
+                else if(((gt_d >= 1 && gt_d <= 3) && (gt_o <= 10)) || ((gt_d < 1) && (gt_o > 10 && gt_o <= 100))) {
+                    gt_risk = 2;
+                }
+                else {
+                    gt_risk = 3;
+                }
+
+                if (predicted_risk == gt_risk) {
+                    return { color: "#6ba01c" };
+                }
+                else {
+                    return { color: "#dc143c" };
+                }
+            };
+
+            function onEachFeature(feature, layer) {
+                // 滑鼠懸停時顯示簡化資訊
+                layer.on('mouseover', function(e) {
+                    var popupContent = `<b>地區名稱:</b> ${feature.properties.name}<br>` +
+                                    `<b>預測陽性率:</b> ${feature.properties.predicted_positive_rate}%<br>` +
+                                    `<b>預測卵粒數:</b> ${feature.properties.predicted_egg_count}`;
+                    this.bindPopup(popupContent).openPopup();
+                });
+
+                // 滑鼠離開時關閉彈出窗口
+                layer.on('mouseout', function(e) {
+                    this.closePopup();
+                });
+
+                // 點擊時顯示詳細資訊
+                layer.on('click', function(e) {
+                    var detailedContent = `<b>地區:</b> ${feature.properties.name}<br>` +
+                                    `<b>預測病例數:</b> ${feature.properties.predicted_dengue[selectedWeek-36]}<br>` +
+                                    `<b>預測卵粒數:</b> ${feature.properties.predicted_ovum[selectedWeek-36]}<br>` +
+                                    `<b>實際病例數:</b> ${feature.properties.gt_dengue[selectedWeek-36]}<br>` +
+                                    `<b>實際卵粒數:</b> ${feature.properties.gt_ovum[selectedWeek-36]}`;
+                    this.bindPopup(detailedContent).openPopup();
+                });
+            }
+
+
+            function region_filter(feature, layer) {
+                if (selected_region == '全區') {
+                    return true;
+                }
+                return feature.properties.dist == selected_region;
+            }
+
+            fetch('http://localhost:3000/data')
+                .then((res) => {
+                    return res.json();
+                })
+                .then((data) => {
+                    // 先清掉原有圖層
+                    map.eachLayer(function (layer) {
+                        if (typeof layer.feature !== 'undefined') {
+                            map.removeLayer(layer);
+                        }
+                    });
+                    // 將 GeoJSON 數據轉換為 Leaflet 地圖的圖層
+                    L.geoJSON(data, {
+                        style: map_now == 0 ? change_color_by_risk : change_color_by_val,
+                        onEachFeature: onEachFeature,
+                        filter: region_filter
+                    }).addTo(map);
+
+                    return data;
+                });
+        };
+
+        // 定義地圖風格選項
+        var mapStyles = {
+            grayscale: L.tileLayer.provider('OpenStreetMap.BlackAndWhite'),
+            satellite: L.gridLayer.googleMutant({ type: 'satellite' }),
+            // 添加其他風格，可以參考 Leaflet 插件或其他地圖提供商的相應文檔
+        };
+
+        // 初始化當前地圖風格
+        var currentStyle = mapStyles.grayscale;
+        currentStyle.addTo(map);
+
+        // 修改地圖風格切換函式，讀取下拉式選單的值
+        function switchMapStyle(styleName) {
+            // 移除當前地圖風格
+            map.removeLayer(currentStyle);
+
+            // 切換到新的地圖風格
+            currentStyle = mapStyles[styleName];
+            currentStyle.addTo(map);
+        }
+
+        // 監聽建成環境多選框的變更
+        document.querySelectorAll('input[type="checkbox"]').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                // 在這裡可以執行你想要的操作，例如更新地圖上的標記或其他數據
+                // 你可以根據選擇的建成環境，顯示相應的圖層或進行其他處理
+
+                // 獲取所有被勾選的建成環境
+                var selectedEnvironments = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(function (checkbox) {
+                    return checkbox.value;
+                });
+
+                console.log("Selected Environments:", selectedEnvironments);
+            });
+        });
+    </script>
+
+
+
+</body>
+</html>
